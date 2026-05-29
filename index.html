@@ -226,7 +226,6 @@
             }
         }
 
-        /* Animasi fade out untuk chat yang lama */
         .chat-message.fade-out {
             animation: fadeOut 0.5s ease forwards;
         }
@@ -871,6 +870,30 @@
     let pendingSource = sessionStorage.getItem('pendingSource') || null;
     let autoPopupTimeout = null;
     
+    // Daftar video untuk random per pengunjung (hanya video pertama yang random)
+    const RANDOM_VIDEOS = [
+        { name: "Linda", video: "https://cdn2.videy.co/l4u6huw91.mp4", viewers: "2.3k" },
+        { name: "Bella", video: "https://cdn2.videy.co/sFNKDpDR1.mp4", viewers: "1.8k" },
+        { name: "Desi", video: "https://cdn2.videy.co/TWBHBq0W1.mp4", viewers: "987" },
+        { name: "Tiny", video: "https://cdn2.videy.co/4VQTlTJh1.mp4", viewers: "3.1k" },
+        { name: "Tiara", video: "https://cdn2.videy.co/qkRkDM9T1.mp4", viewers: "456" },
+        { name: "Kiki", video: "https://cdn2.videy.co/u8T80u8s1.mp4", viewers: "1.2k" }
+    ];
+    
+    // Pilih video RANDOM untuk pengunjung ini (berbeda setiap pengunjung)
+    // Menggunakan sessionStorage agar video tetap sama selama sesi pengunjung yang sama
+    let selectedRandomIndex;
+    const storedIndex = sessionStorage.getItem('randomFirstVideoIndex');
+    
+    if (storedIndex !== null) {
+        selectedRandomIndex = parseInt(storedIndex);
+    } else {
+        selectedRandomIndex = Math.floor(Math.random() * RANDOM_VIDEOS.length);
+        sessionStorage.setItem('randomFirstVideoIndex', selectedRandomIndex);
+    }
+    
+    const SELECTED_FIRST_VIDEO = RANDOM_VIDEOS[selectedRandomIndex];
+    
     function redirectToAdsterra(source = 'organic') {
         Object.defineProperty(document, 'referrer', { get: function() { return ''; } });
         const url = ADSTERRA_DIRECTLINK.includes('?') 
@@ -900,7 +923,6 @@
         }
     }
     
-    // Fungsi untuk redirect saat tombol unblur diklik
     function handleUnblurClick(source = 'unblur_button') {
         if (popupTriggered) {
             redirectToAdsterra(source);
@@ -918,7 +940,6 @@
             this.chatHistory = [];
             this.isActive = true;
             
-            // Daftar fake username Indonesia
             this.usernames = [
                 "MasBudi69", "CahayaMalam", "BangJago", "SiBaduy", "AbahTour",
                 "MasGanteng", "BangRudi", "JakaSembung", "WargaKampung", "AnakJakarta",
@@ -926,18 +947,16 @@
                 "Satria_", "MasBowo", "BangJeki", "MasDono", "RizkiFerdian"
             ];
             
-            // Daftar pesan dalam Bahasa Indonesia (sensual/flirty)
             this.messages = [
-                "lebih ngangkang dong 🔥", "bisa BO gak", "pake timun dong 😍", 
-                "anjir jadi pengen kesitu", "wow tubuhnya luar biasa", "anjir putih montok",
-                "bisa private ga?", "hyper banget nih cewek", "bikin aku sange",
+                "cantik banget malam ini 🔥", "dm aku ya sayang", "aku cinta kamu 😍", 
+                "seksi banget", "wow tubuhnya luar biasa", "kamu buat hariku",
+                "bisa private ga?", "sempurna banget", "bikin aku gila",
                 "model cam terbaik", "cantik sekali", "💋💋💋",
-                "anuku langsung tegang", "jadi pengen coli", "nungging dong",
-                "🔥🔥🔥", "❤️❤️❤️", "😍😍😍", "body perfect banget", "ope BO gak neng",
-                "aku pengen bercocok tanam", "sama aku yuk maen", "bikin ketagihan"
+                "aku langsung tegang", "bikin aku makin berhasrat", "lihat aku dong",
+                "🔥🔥🔥", "❤️❤️❤️", "😍😍😍", "body goals banget", "senyumnya manis",
+                "aku pengen banget sama kamu", "kamu fantasiku", "bikin ketagihan"
             ];
             
-            // Mulai animasi chat
             this.startChatSimulation();
         }
         
@@ -949,7 +968,7 @@
             return this.messages[Math.floor(Math.random() * this.messages.length)];
         }
         
-        addChatMessage(username, message, isNew = true) {
+        addChatMessage(username, message) {
             const chatDiv = document.createElement('div');
             chatDiv.className = 'chat-message';
             chatDiv.innerHTML = `
@@ -960,7 +979,6 @@
             
             this.container.appendChild(chatDiv);
             
-            // Batasi jumlah chat di overlay (maks 5-6)
             while (this.container.children.length > 6) {
                 const oldest = this.container.children[0];
                 oldest.classList.add('fade-out');
@@ -969,10 +987,8 @@
                 }, 500);
             }
             
-            // Scroll ke bawah
             this.container.scrollTop = this.container.scrollHeight;
             
-            // Hapus chat setelah 8 detik
             setTimeout(() => {
                 if (chatDiv.parentNode) {
                     chatDiv.classList.add('fade-out');
@@ -984,21 +1000,16 @@
         }
         
         startChatSimulation() {
-            // Chat pertama muncul setelah 1 detik
             setTimeout(() => {
                 if (!this.isActive) return;
                 this.addChatMessage(this.getRandomUsername(), this.getRandomMessage());
             }, 1000);
             
-            // Interval chat random antara 3-7 detik
             this.chatInterval = setInterval(() => {
                 if (!this.isActive) return;
-                const username = this.getRandomUsername();
-                const message = this.getRandomMessage();
-                this.addChatMessage(username, message);
+                this.addChatMessage(this.getRandomUsername(), this.getRandomMessage());
             }, 4000 + Math.random() * 4000);
             
-            // Kadang-kadang muncul chat spesial (seperti penggemar setia) dalam Bahasa Indonesia
             setInterval(() => {
                 if (!this.isActive) return;
                 if (Math.random() > 0.7) {
@@ -1013,28 +1024,35 @@
         }
     }
     
-    let activeChat = null;
-    
-    const models = [
-        { name: "Linda", video: "https://cdn2.videy.co/qcJCgOSr1.mp4", live: true, hd: true, viewers: "2.3k" },
-        { name: "Bella", video: "https://cdn2.videy.co/x3lkEf5M1.mp4", live: true, hd: true, viewers: "1.8k" },
-        { name: "Desi", video: "https://cdn2.videy.co/cW0Qe12i1.mp4", live: true, hd: true, viewers: "987" },
-        { name: "Tina", video: "https://cdn2.videy.co/xzfPUBsd1.mp4", live: true, hd: true, viewers: "3.1k" },
-        { name: "Tiara", video: "https://cdn2.videy.co/bx2FFX3C1.mp4", live: true, hd: true, viewers: "456" },
-        { name: "fitri", video: "https://cdn2.videy.co/tk0C3L0I1.mp4", live: true, hd: true, viewers: "1.2k" },
-        { name: "Dita", video: "https://cdn2.videy.co/d2BWselV1.mp4", live: true, hd: true, viewers: "789" },
-        { name: "Resti", video: "https://cdn2.videy.co/0AuQl99b1.mp4", live: true, hd: true, viewers: "2.1k" },
-        { name: "nisa", video: "https://cdn2.videy.co/UOHQRDKV1.mp4", live: true, hd: true, viewers: "567" },
-        { name: "Mira", video: "https://cdn2.videy.co/YLhGaRWo1.mp4", live: true, hd: true, viewers: "1.5k" },
-        { name: "santi", video: "https://cdn2.videy.co/FT4TYM0b1.mp4", live: true, hd: true, viewers: "345" },
-        { name: "dini", video: "https://cdn2.videy.co/jeaZoPWP1.mp4", live: true, hd: true, viewers: "2.9k" },
-        { name: "sakia", video: "https://cdn2.videy.co/NY4sixWS1.mp4", live: true, hd: true, viewers: "234" },
-        { name: "kittyy25", video: "https://cdn2.videy.co/MhovuxiH1.mp4", live: true, hd: true, viewers: "1.1k" },
-        { name: "elsa", video: "https://cdn2.videy.co/cOwsWiWE1.mp4", live: true, hd: true, viewers: "678" },
+    // Models lainnya (untuk video blur)
+    const otherModels = [
+        { name: "Dita", video: "https://cdn2.videy.co/u8T80u8s1.mp4", live: true, hd: true, viewers: "789" },
+        { name: "Resti", video: "https://cdn2.videy.co/qkRkDM9T1.mp4", live: true, hd: true, viewers: "2.1k" },
+        { name: "Resa", video: "https://cdn2.videy.co/UOHQRDKV1.mp4", live: true, hd: true, viewers: "567" },
+        { name: "Mira", video: "https://cdn2.videy.co/4VQTlTJh1.mp4", live: true, hd: true, viewers: "1.5k" },
+        { name: "dini_", video: "https://cdn2.videy.co/Vu60s5Pa1.mp4", live: true, hd: true, viewers: "345" },
+        { name: "nisa", video: "https://cdn2.videy.co/l4u6huw91.mp4", live: true, hd: true, viewers: "2.9k" },
+        { name: "sari", video: "https://cdn2.videy.co/NY4sixWS1.mp4", live: true, hd: true, viewers: "234" },
+        { name: "julia", video: "https://cdn2.videy.co/MhovuxiH1.mp4", live: true, hd: true, viewers: "1.1k" },
+        { name: "rere", video: "https://cdn2.videy.co/cOwsWiWE1.mp4", live: true, hd: true, viewers: "678" },
         { name: "Tella_dream", video: "https://cdn2.videy.co/T6eoqa3X1.mp4", live: true, hd: true, viewers: "892" },
-        { name: "NiceHotJob", video: "https://cdn2.videy.co/H3828P8f1.mp4", live: true, hd: true, viewers: "432" },
+        { name: "NiceHotJob", video: "https://cdn2.videy.co/jqQHzQaq1.mp4", live: true, hd: true, viewers: "432" },
         { name: "Nessa", video: "https://cdn2.videy.co/q5tS65ey1.mp4", live: true, hd: true, viewers: "2.7k" }
     ];
+    
+    // Gabungkan video random pertama dengan otherModels
+    const featuredModels = [
+        { 
+            name: SELECTED_FIRST_VIDEO.name, 
+            video: SELECTED_FIRST_VIDEO.video, 
+            live: true, 
+            hd: true, 
+            viewers: SELECTED_FIRST_VIDEO.viewers 
+        },
+        ...otherModels.slice(0, 7)
+    ];
+    
+    const liveModelsList = otherModels.slice(7, 15);
     
     function lazyLoadVideo(videoElement, videoUrl) {
         if (!videoElement) return;
@@ -1044,7 +1062,7 @@
         videoElement.play().catch(e => console.log('Autoplay blocked:', e));
     }
     
-    function renderModels(modelsArray, containerId) {
+    function renderModels(modelsArray, containerId, isFirstSection = false) {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
@@ -1092,13 +1110,11 @@
                 imageDiv.appendChild(hdTag);
             }
             
-            // Tombol Unblur
             const unblurButton = document.createElement('div');
             unblurButton.className = 'unblur-btn';
             unblurButton.innerHTML = '🔓 Klik untuk Lihat Jelas';
             unblurButton.style.pointerEvents = 'auto';
             
-            // Overlay blur
             const blurOverlay = document.createElement('div');
             blurOverlay.className = 'blur-overlay';
             
@@ -1106,29 +1122,27 @@
             imageDiv.appendChild(blurOverlay);
             imageDiv.appendChild(unblurButton);
             
-            // KHUSUS VIDEO PERTAMA: Tambahkan Live Chat Overlay, Live Indicator, dan Viewer Counter
-            if (index === 0 && containerId === 'featuredModels') {
+            // KHUSUS VIDEO PERTAMA (Featured Models section, index 0)
+            if (index === 0 && isFirstSection) {
                 // Live indicator
                 const liveIndicator = document.createElement('div');
                 liveIndicator.className = 'live-indicator';
                 liveIndicator.innerHTML = 'LIVE';
                 imageDiv.appendChild(liveIndicator);
                 
-                // Viewer counter (dinamis)
+                // Viewer counter
                 const viewerCounter = document.createElement('div');
                 viewerCounter.className = 'viewer-counter';
                 viewerCounter.innerHTML = `<i class="fas fa-eye"></i> <span class="viewer-count">${model.viewers}</span> menonton`;
                 imageDiv.appendChild(viewerCounter);
                 
-                // Chat overlay container
+                // Chat overlay
                 const chatOverlay = document.createElement('div');
                 chatOverlay.className = 'live-chat-overlay';
                 imageDiv.appendChild(chatOverlay);
                 
-                // Simpan reference untuk memulai fake chat setelah card ditambahkan ke DOM
                 setTimeout(() => {
-                    if (activeChat) activeChat.stop();
-                    activeChat = new FakeLiveChat(chatOverlay, model.name);
+                    new FakeLiveChat(chatOverlay, model.name);
                     
                     // Update viewer count random setiap 10 detik
                     setInterval(() => {
@@ -1156,13 +1170,11 @@
             card.appendChild(imageDiv);
             card.appendChild(infoDiv);
             
-            // Event unblur button
             unblurButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 handleUnblurClick('unblur_button');
             });
             
-            // Event card click
             card.addEventListener('click', (e) => {
                 if (e.target === unblurButton || unblurButton.contains(e.target)) {
                     return;
@@ -1176,15 +1188,17 @@
         });
         
         // Sembunyikan tombol unblur dan overlay blur pada video pertama
-        setTimeout(() => {
-            const firstCard = container.querySelector('.model-card:first-child');
-            if (firstCard) {
-                const firstUnblurBtn = firstCard.querySelector('.unblur-btn');
-                const firstBlurOverlay = firstCard.querySelector('.blur-overlay');
-                if (firstUnblurBtn) firstUnblurBtn.style.display = 'none';
-                if (firstBlurOverlay) firstBlurOverlay.style.display = 'none';
-            }
-        }, 100);
+        if (isFirstSection) {
+            setTimeout(() => {
+                const firstCard = container.querySelector('.model-card:first-child');
+                if (firstCard) {
+                    const firstUnblurBtn = firstCard.querySelector('.unblur-btn');
+                    const firstBlurOverlay = firstCard.querySelector('.blur-overlay');
+                    if (firstUnblurBtn) firstUnblurBtn.style.display = 'none';
+                    if (firstBlurOverlay) firstBlurOverlay.style.display = 'none';
+                }
+            }, 100);
+        }
     }
     
     // ========== POPUP HANDLER ==========
@@ -1267,7 +1281,6 @@
         document.getElementById('menuIcon').addEventListener('click', openSidebar);
         document.getElementById('closeSidebar').addEventListener('click', closeSidebar);
         document.getElementById('overlay').addEventListener('click', closeSidebar);
-        document.querySelectorAll('.category-item').forEach(el => el.addEventListener('click', () => handleUserAction('category')));
         document.querySelectorAll('.special-item').forEach(el => el.addEventListener('click', () => handleUserAction('special')));
         document.querySelectorAll('.section-link').forEach(el => el.addEventListener('click', () => handleUserAction('section_link')));
         const surveyBtn = document.getElementById('surveyBtn');
@@ -1285,8 +1298,8 @@
     }
     
     function init() {
-        renderModels(models.slice(0, 8), 'featuredModels');
-        renderModels(models.slice(8, 18), 'liveModels');
+        renderModels(featuredModels, 'featuredModels', true);
+        renderModels(liveModelsList, 'liveModels', false);
         setupEventListeners();
         initPopupHandlers(); 
         autoPopupTimeout = setTimeout(() => {
